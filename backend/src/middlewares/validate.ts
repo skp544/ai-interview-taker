@@ -1,28 +1,41 @@
-import type { NextFunction, Request, Response } from "express";
-import type { ZodType } from "zod";
+import type { Request, RequestHandler } from "express";
+import type { ZodType, z } from "zod";
 import type { ValidationIssue } from "../types/api";
 import { ApiError } from "../utils/ApiError";
 
-interface RequestSchemas {
-  body?: ZodType;
-  query?: ZodType;
-  params?: ZodType;
+interface RequestSchemas<
+  P extends ZodType,
+  Q extends ZodType,
+  B extends ZodType,
+> {
+  params?: P;
+  query?: Q;
+  body?: B;
 }
 
-const parts = ["body", "query", "params"] as const;
+const parts = ["params", "query", "body"] as const;
 
 /**
- * Validates req.body / req.query / req.params against zod schemas and replaces
- * them with the parsed (coerced, stripped) values. Failures go to the global
- * error handler as a 400 ApiError with the list of issues.
+ * Validates req.params / req.query / req.body against zod schemas and replaces
+ * them with the parsed (coerced, defaulted, stripped) values. Failures go to
+ * the global error handler as a 400 ApiError with the list of issues.
+ *
+ * The returned handler is typed from the schemas, so controllers declared as
+ * RequestHandler<IdParam, unknown, CreateBody, PaginationQuery> see the parsed types.
  */
 export const validate =
-  (schemas: RequestSchemas) =>
-  (req: Request, _res: Response, next: NextFunction) => {
+  <
+    P extends ZodType = ZodType<Request["params"]>,
+    Q extends ZodType = ZodType<Request["query"]>,
+    B extends ZodType = ZodType<any>,
+  >(
+    schemas: RequestSchemas<P, Q, B>,
+  ): RequestHandler<z.infer<P>, any, z.infer<B>, z.infer<Q>> =>
+  (req, _res, next) => {
     const issues: ValidationIssue[] = [];
 
     for (const part of parts) {
-      const schema = schemas[part];
+      const schema: ZodType | undefined = schemas[part];
       if (!schema) continue;
 
       const result = schema.safeParse(req[part]);
