@@ -9,6 +9,8 @@ const categorySchema = new Schema(
     score: {
       type: Number,
       required: true,
+      min: 0,
+      max: 100,
     },
 
     comment: {
@@ -16,37 +18,42 @@ const categorySchema = new Schema(
       required: true,
     },
   },
-  { __id: false, timestamps: true },
+  { _id: false },
 );
 
-const feedbackSchema = new Schema({
-  interviewId: {
-    type: Schema.Types.ObjectId,
-    ref: "Interview",
-    required: true,
-    index: true,
+const feedbackSchema = new Schema(
+  {
+    interviewId: {
+      type: Schema.Types.ObjectId,
+      ref: "Interview",
+      required: true,
+      index: true,
+    },
+    totalScore: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+    },
+    categoryScore: {
+      type: [categorySchema],
+      required: true,
+    },
+    strengths: {
+      type: [String],
+      required: true,
+    },
+    areasOfImprovement: {
+      type: [String],
+      required: true,
+    },
+    finalAssessment: {
+      type: String,
+      required: true,
+    },
   },
-  totalScore: {
-    type: Number,
-    required: true,
-  },
-  categoryScore: {
-    type: [categorySchema],
-    required: true,
-  },
-  strengths: {
-    type: [String],
-    required: true,
-  },
-  areasOfImprovement: {
-    type: [String],
-    required: true,
-  },
-  finalAssessment: {
-    type: String,
-    required: true,
-  },
-});
+  { timestamps: true },
+);
 
 export type FeedbackDocument = InferSchemaType<typeof feedbackSchema> & {
   _id: mongoose.Types.ObjectId;
