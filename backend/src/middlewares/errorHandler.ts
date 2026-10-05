@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import { ZodError } from "zod";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 import type { ValidationIssue } from "../types/api";
 import { ApiError } from "../utils/ApiError";
 import { sendError } from "../utils/apiResponse";
@@ -34,7 +35,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
     );
   }
 
-  console.error(err);
+  logger.error(err);
   return sendError(
     res,
     "Internal server error",
