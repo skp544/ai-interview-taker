@@ -35,7 +35,7 @@ const feedbackSchema = new Schema(
       min: 0,
       max: 100,
     },
-    categoryScore: {
+    categoryScores: {
       type: [categorySchema],
       required: true,
     },
@@ -43,7 +43,7 @@ const feedbackSchema = new Schema(
       type: [String],
       required: true,
     },
-    areasOfImprovement: {
+    areasForImprovement: {
       type: [String],
       required: true,
     },
