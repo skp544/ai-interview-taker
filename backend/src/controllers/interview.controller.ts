@@ -5,6 +5,8 @@ import { interviewRepository } from "../repositories/interview.repository";
 import { getRandomInterviewCover } from "../constants";
 import { sendSuccess } from "../utils/apiResponse";
 import { generateInterviewQuestions } from "../services/openai.service";
+import { notFoundHandler } from "../middlewares/errorHandler";
+import { ApiError } from "../utils/ApiError";
 
 export const createInterview: RequestHandler<
   unknown,
@@ -56,7 +58,7 @@ export const getInterviewById: RequestHandler<IdParam> = async (req, res) => {
   const interview = await interviewRepository.getById(id);
 
   if (!interview) {
-    return res.status(404).json({ message: "Interview not found" });
+    throw ApiError.notFound("Interview not found");
   }
 
   sendSuccess(res, "Interview fetched successfully", interview);
