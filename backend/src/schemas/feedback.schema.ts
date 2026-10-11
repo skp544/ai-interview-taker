@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { feedbackCategoryNames } from "../constants";
+import { objectIdSchema } from "./common.schema";
 
 export const transcriptEntrySchema = z.object({
   role: z.string(),
@@ -7,9 +8,9 @@ export const transcriptEntrySchema = z.object({
 });
 
 export const createFeedbackSchema = z.object({
-  interviewId: z.string(),
+  interviewId: objectIdSchema,
   transcript: z.array(transcriptEntrySchema).min(1),
-  feedbackId: z.string().optional(),
+  feedbackId: objectIdSchema.optional(),
 });
 
 export const feedbackSchema = z.object({
@@ -29,3 +30,5 @@ export const feedbackSchema = z.object({
 });
 
 export type FeedbackAI = z.infer<typeof feedbackSchema>;
+
+export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;

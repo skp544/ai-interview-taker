@@ -15,3 +15,7 @@ export const paginationQuerySchema = z.object({
 
 export type IdParam = z.infer<typeof idParamSchema>;
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+
+// Route params: /:interviewId
+export const interviewIdParamSchema = z.object({ interviewId: objectIdSchema });
+export type InterviewIdParam = z.infer<typeof interviewIdParamSchema>;
