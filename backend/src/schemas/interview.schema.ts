@@ -9,3 +9,5 @@ export const createInterviewSchema = z.object({
 });
 
 export const updateInterviewSchema = createInterviewSchema.partial();
+
+export type CreateInterviewBody = z.infer<typeof createInterviewSchema>;
