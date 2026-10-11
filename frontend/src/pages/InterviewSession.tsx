@@ -2,16 +2,35 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createFeedback, getInterview } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { canListen, canSpeak, listen, speak, stopSpeaking, type Listener } from "../lib/speech";
+import {
+  canListen,
+  canSpeak,
+  listen,
+  speak,
+  stopSpeaking,
+  type Listener,
+} from "../lib/speech";
 import type { Interview, TranscriptEntry } from "../types";
-import { Button, ErrorBox, LinkButton, Spinner, TechBadges } from "../components/ui";
+import {
+  Button,
+  ErrorBox,
+  LinkButton,
+  Spinner,
+  TechBadges,
+} from "../components/ui";
 
 export default function InterviewSession() {
   const { id = "" } = useParams();
-  const { data, error, loading, reload } = useAsync(() => getInterview(id), [id]);
+  const { data, error, loading, reload } = useAsync(
+    () => getInterview(id),
+    [id],
+  );
 
   if (loading) return <Spinner label="Loading interview..." />;
-  if (error || !data) return <ErrorBox message={error ?? "Interview not found."} onRetry={reload} />;
+  if (error || !data)
+    return (
+      <ErrorBox message={error ?? "Interview not found."} onRetry={reload} />
+    );
   return <Session interview={data} />;
 }
 
@@ -29,7 +48,9 @@ function Session({ interview }: { interview: Interview }) {
   const listener = useRef<Listener | null>(null);
 
   const isLast = index === questions.length - 1;
-  const progress = Math.round(((started ? index + 1 : 0) / questions.length) * 100);
+  const progress = Math.round(
+    ((started ? index + 1 : 0) / questions.length) * 100,
+  );
 
   // Read each question aloud when it becomes current.
   useEffect(() => {
@@ -39,10 +60,13 @@ function Session({ interview }: { interview: Interview }) {
     return () => stopSpeaking();
   }, [started, index, questions]);
 
-  useEffect(() => () => {
-    listener.current?.stop();
-    stopSpeaking();
-  }, []);
+  useEffect(
+    () => () => {
+      listener.current?.stop();
+      stopSpeaking();
+    },
+    [],
+  );
 
   function toggleMic() {
     if (listening) return listener.current?.stop();
@@ -53,7 +77,10 @@ function Session({ interview }: { interview: Interview }) {
       (text) => setAnswer(base + text),
       (err) => {
         setListening(false);
-        if (err && err !== "no-speech" && err !== "aborted") setError(`Microphone error: ${err}. You can type your answer instead.`);
+        if (err && err !== "no-speech" && err !== "aborted")
+          setError(
+            `Microphone error: ${err}. You can type your answer instead.`,
+          );
       },
     );
     setListening(!!listener.current);
@@ -84,37 +111,63 @@ function Session({ interview }: { interview: Interview }) {
     }
   }
 
-  if (submitting) return <Spinner label="Analysing your interview and generating feedback..." />;
+  if (submitting)
+    return (
+      <Spinner label="Analysing your interview and generating feedback..." />
+    );
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold capitalize">{interview.role} interview</h1>
-        <p className="mb-2 text-zinc-600">{interview.level} · {interview.type}</p>
+        <h1 className="text-2xl font-bold capitalize">
+          {interview.role} interview
+        </h1>
+        <p className="mb-2 text-zinc-600">
+          {interview.level} · {interview.type}
+        </p>
         <TechBadges items={interview.techStack} />
       </div>
 
       {!started ? (
         <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 text-center">
           <p className="text-sm text-zinc-600">
-            You will be asked {questions.length} questions one at a time. Answer by speaking
-            {canListen() ? "" : " (voice input is not supported in this browser, so type instead)"} or typing, then continue.
+            You will be asked {questions.length} questions one at a time. Answer
+            by speaking
+            {canListen()
+              ? ""
+              : " (voice input is not supported in this browser, so type instead)"}{" "}
+            or typing, then continue.
             {canSpeak() ? " Questions are read aloud." : ""}
           </p>
           <div className="flex justify-center gap-2">
-            <Button onClick={() => setStarted(true)} disabled={questions.length === 0}>Start interview</Button>
-            <LinkButton to={`/interview/${interview.id}/feedback`} variant="outline">Previous feedback</LinkButton>
+            <Button
+              onClick={() => setStarted(true)}
+              disabled={questions.length === 0}
+            >
+              Start interview
+            </Button>
+            <LinkButton
+              to={`/interview/${interview.id}/feedback`}
+              variant="outline"
+            >
+              Previous feedback
+            </LinkButton>
           </div>
         </div>
       ) : (
         <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
           <div>
             <div className="flex justify-between text-sm font-medium text-indigo-700">
-              <span>Question {index + 1} of {questions.length}</span>
+              <span>
+                Question {index + 1} of {questions.length}
+              </span>
               <span>{progress}%</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-100">
-              <div className="h-full bg-indigo-500 transition-all" style={{ width: `${progress}%` }} />
+              <div
+                className="h-full bg-indigo-500 transition-all"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
 
@@ -124,7 +177,13 @@ function Session({ interview }: { interview: Interview }) {
             </p>
             <p className="mt-1 text-lg leading-snug">{questions[index]}</p>
             {canSpeak() && (
-              <button className="mt-2 text-xs text-indigo-600 underline" onClick={() => { setSpeaking(true); speak(questions[index], () => setSpeaking(false)); }}>
+              <button
+                className="mt-2 text-xs text-indigo-600 underline"
+                onClick={() => {
+                  setSpeaking(true);
+                  speak(questions[index], () => setSpeaking(false));
+                }}
+              >
                 Replay question
               </button>
             )}
@@ -144,11 +203,18 @@ function Session({ interview }: { interview: Interview }) {
 
           <div className="flex flex-wrap justify-between gap-2">
             {canListen() ? (
-              <Button variant={listening ? "danger" : "outline"} onClick={toggleMic}>
+              <Button
+                variant={listening ? "danger" : "outline"}
+                onClick={toggleMic}
+              >
                 {listening ? "Stop recording" : "Record answer"}
               </Button>
-            ) : <span />}
-            <Button onClick={next}>{isLast ? "Finish & get feedback" : "Next question"}</Button>
+            ) : (
+              <span />
+            )}
+            <Button onClick={next}>
+              {isLast ? "Finish & get feedback" : "Next question"}
+            </Button>
           </div>
         </div>
       )}
