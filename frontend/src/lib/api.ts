@@ -7,7 +7,7 @@ import type {
 } from "../types";
 
 export const API_URL: string = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:5000/api/v1"
+  import.meta.env.VITE_API_URL ?? "http://localhost:5001/api/v1"
 ).replace(/\/$/, "");
 
 /** Error thrown for any failed API call. */
@@ -76,8 +76,13 @@ function normalizeInterview(raw: RawInterview): Interview {
   return { ...raw, id: raw.id ?? raw._id ?? "" };
 }
 
-export async function listInterviews(page = 1, limit = 12): Promise<Interview[]> {
-  const data = await request<RawInterview[]>(`/interview?page=${page}&limit=${limit}`);
+export async function listInterviews(
+  page = 1,
+  limit = 12,
+): Promise<Interview[]> {
+  const data = await request<RawInterview[]>(
+    `/interview?page=${page}&limit=${limit}`,
+  );
   return data.map(normalizeInterview);
 }
 
@@ -85,7 +90,9 @@ export async function getInterview(id: string): Promise<Interview> {
   return normalizeInterview(await request<RawInterview>(`/interview/${id}`));
 }
 
-export async function createInterview(input: CreateInterviewInput): Promise<Interview> {
+export async function createInterview(
+  input: CreateInterviewInput,
+): Promise<Interview> {
   return normalizeInterview(
     await request<RawInterview>("/interview", {
       method: "POST",
@@ -94,32 +101,36 @@ export async function createInterview(input: CreateInterviewInput): Promise<Inte
   );
 }
 
-/**
- * ASSUMPTION: POST /feedback accepts { interviewId, transcript } (per
- * createFeedbackSchema) and responds with the generated feedback document,
- * either directly or as { feedback } / { feedbackId }. The route is not
- * implemented in the backend yet.
- */
+type RawFeedback = Omit<Feedback, "id" | "interviewId"> & {
+  _id?: string;
+  interviewId?: string;
+};
+
+function normalizeFeedback({ _id, ...raw }: RawFeedback): Feedback {
+  return { ...raw, id: _id };
+}
+
+/** POST /feedback: generates feedback from the transcript and returns the saved document. */
 export async function createFeedback(
   interviewId: string,
   transcript: TranscriptEntry[],
-): Promise<Feedback | null> {
-  const data = await request<(Feedback & { feedback?: Feedback }) | null>("/feedback", {
-    method: "POST",
-    body: JSON.stringify({ interviewId, transcript }),
-  });
-  if (!data) return null;
-  if (data.feedback) return data.feedback;
-  return Array.isArray(data.categoryScores) ? data : null;
+): Promise<Feedback> {
+  return normalizeFeedback(
+    await request<RawFeedback>("/feedback", {
+      method: "POST",
+      body: JSON.stringify({ interviewId, transcript }),
+    }),
+  );
 }
 
-/**
- * ASSUMPTION: GET /feedback/interview/:interviewId returns the latest feedback
- * (or 404 / null when none exists). Not implemented in the backend yet.
- */
-export async function getFeedbackByInterview(interviewId: string): Promise<Feedback | null> {
+/** GET /feedback/interview/:interviewId: responds 404 when none exists yet, mapped to null. */
+export async function getFeedbackByInterview(
+  interviewId: string,
+): Promise<Feedback | null> {
   try {
-    return await request<Feedback | null>(`/feedback/interview/${interviewId}`);
+    return normalizeFeedback(
+      await request<RawFeedback>(`/feedback/interview/${interviewId}`),
+    );
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
